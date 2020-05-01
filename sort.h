@@ -15,7 +15,8 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
-#define SHM_NAME "/shm_sort13"
+#define SHM_NAME "/shm_sort"
+#define MQ_NAME "/mq_tasks"
 
 /* Type definitions. */
 
@@ -45,6 +46,11 @@ typedef struct{
     int n_processes;
     pid_t ppid;
 } Sort;
+
+/* Estructura para los mensajes de la cola */
+typedef struct{
+  int foo; /* @PLACEHOLDER */
+}Mensaje;
 
 /* Prototypes. */
 
@@ -148,5 +154,8 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
  * @return                  ERROR in case of error, OK otherwise.
  */
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay);
+
+/* Añadir doc */
+Status new_worker(Sort *sort, int level, int part);
 
 #endif

@@ -243,10 +243,18 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
     return OK;
 }
 
+void usr1_handler_func(int sig){
+  printf("Señal %d recibida\n",sig);
+  return;
+}
+
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay){
   Sort sort;
   Sort* sort_pointer = &sort;
   int fd_shm;
+  struct sigaction handler_usr1;
+  struct mq_attr attributes = {0,10,0,sizeof(Mensaje)};
+  mqd_t queue;
 
   /* Inicializar la estructura sort en memoria compartida */
   if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR) {
@@ -278,9 +286,32 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     return ERROR;
   }
 
+  /* Inicializar manejador del proceso principal para la señal SIGUSR1 */
+  handler_usr1.sa_handler = usr1_handler_func;/* funcion manejador */
+  sigemptyset(&(handler_usr1.sa_mask));
+  handler_usr1.sa_flags = 0;
+
+  if(sigaction(SIGUSR1, &handler_usr1, NULL) < 0){
+    perror("sigaction");
+    return ERROR;
+  }
+
+  /* Inicializar cola de mensajes */
+  queue = mq_open(MQ_NAME, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR, &attributes);
+  if(queue == (mqd_t)-1){
+    fprintf(stderr, "Error opening the queue\n");
+    return ERROR;
+  }
+
+
+  /* Iniciar trabajos */
   /* ################################### */
 
   /* ################################### */
+
+  /* Cerrar la cola de mensajes */
+  mq_close(queue);
+  mq_unlink(MQ_NAME);
 
   /* Cerrar memoria compartida */
   /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
@@ -288,4 +319,19 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   shm_unlink(SHM_NAME);
 
   return OK;
+}
+
+Status new_worker(Sort *sort, int level, int part){
+
+  pid_t pid;
+
+  pid = fork();
+  if(pid==0){
+    solve_task(sort,level,part);
+    printf("Trabajador %d termina\n",getpid());
+    exit(EXIT_SUCCESS);
+  }
+
+  return OK;
+
 }
