@@ -244,6 +244,14 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 }
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay){
+  Sort sort;
+
+  if(init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR){
+    fprintf(stderr, "sort_multi_process - init_sort\n");
+    return ERROR;
+  }
+
+  
 
   return OK;
 }
