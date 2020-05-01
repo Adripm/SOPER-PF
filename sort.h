@@ -15,6 +15,8 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
+#define SHM_NAME "/shm_sort"
+
 /* Type definitions. */
 
 /* Completed flag for the tasks. */
@@ -43,6 +45,11 @@ typedef struct{
     int n_processes;
     pid_t ppid;
 } Sort;
+
+/* Estructura para la memoria compartida */
+typedef struct{
+
+}ShmStructure;
 
 /* Prototypes. */
 

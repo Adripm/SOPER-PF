@@ -244,12 +244,41 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 }
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay){
-  Sort sort;
+  ShmStructure* shm_struct = NULL;
+
+  /* Crear memoria compartida */
+  int fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+  if(fd_shm==-1){
+    fprintf(stderr, "Error creating the shared memory segment\n");
+    return ERROR;
+  }
+
+  /* Redimensionar memoria compartida */
+  if(ftruncate(fd_shm,MAX_DATA)==-1){ /* @PLACEHOLDER - Comprobar tamaño necesitado */
+    fprintf(stderr, "Error resizing the shared memory segment\n");
+    shm_unlink(SHM_NAME);
+    return ERROR;
+  }
+
+  /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
+  shm_struct = mmap(NULL, sizeof(*shm_struct), PROT_READ|PROT_WRITE, MAP_SHARED, fd_shm, 0);
+  close(fd_shm);
+
+  if(shm_struct==MAP_FAILED){
+    fprintf(stderr, "Error mapping the shared memory segment\n");
+    shm_unlink(SHM_NAME);
+    return EXIT;
+  }
 
   if(init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR){
     fprintf(stderr, "sort_multi_process - init_sort\n");
     return ERROR;
   }
-  
+
+  /* Cerrar memoria compartida */
+  /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
+  munmap(shm_struct, sizeof(*shm_struct));
+  shm_unlink(SHM_NAME);
+
   return OK;
 }

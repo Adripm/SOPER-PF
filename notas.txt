@@ -1,0 +1,10 @@
+memoria compartida
+cola de mensajes
+handler SIGUSR1 proceso principal
+alarm -> trabajador envia señal periodicamente mediante tuberia a ilustrador
+handler sigint -> secuencia de salida del proceso
+secuencia de salida -> envia señales sigterm a trabajadores e ilustrador
+
+Manejador de SIGINT -> función que cierra todo lo del programa
+
+¿ Hacer variable global para estructura que maneja la memoria compartida ?
