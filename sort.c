@@ -242,3 +242,8 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 
     return OK;
 }
+
+Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay){
+
+  return OK;
+}

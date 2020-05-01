@@ -134,4 +134,17 @@ Status solve_task(Sort *sort, int level, int part);
  */
 Status sort_single_process(char *file_name, int n_levels, int n_processes, int delay);
 
+/**
+ * Solves a sorting problem using multiprocessing
+ * @method sort_multi_process
+ * @date   2020-05-1
+ * @author Adrián Palmero y Diego Troyano
+ * @param  file_name        File with the data.
+ * @param  n_levels         Total number of levels in the algorithm.
+ * @param  n_processes      Number of processes.
+ * @param  delay            Delay for the algorithm.
+ * @return                  ERROR in case of error, OK otherwise.
+ */
+Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay);
+
 #endif
