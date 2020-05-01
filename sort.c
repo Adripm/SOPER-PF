@@ -247,7 +247,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   ShmStructure* shm_struct = NULL;
 
   /* Crear memoria compartida */
-  int fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+  int fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if(fd_shm==-1){
     fprintf(stderr, "Error creating the shared memory segment\n");
     return ERROR;
@@ -267,13 +267,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   if(shm_struct==MAP_FAILED){
     fprintf(stderr, "Error mapping the shared memory segment\n");
     shm_unlink(SHM_NAME);
-    return EXIT;
-  }
-
-  if(init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR){
-    fprintf(stderr, "sort_multi_process - init_sort\n");
     return ERROR;
   }
+
+  /* ################################### */
+
+  
+  /* ################################### */
 
   /* Cerrar memoria compartida */
   /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */

@@ -48,7 +48,7 @@ typedef struct{
 
 /* Estructura para la memoria compartida */
 typedef struct{
-
+  int dick; /* @PLACEHOLDER */
 }ShmStructure;
 
 /* Prototypes. */
