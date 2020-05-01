@@ -46,11 +46,6 @@ typedef struct{
     pid_t ppid;
 } Sort;
 
-/* Estructura para la memoria compartida */
-typedef struct{
-  int dick; /* @PLACEHOLDER */
-}ShmStructure;
-
 /* Prototypes. */
 
 /**
