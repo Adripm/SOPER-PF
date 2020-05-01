@@ -1,12 +1,12 @@
 SRC=./
 INC=./
-OBJ=./
+OBJ=./bin
 
 CC=gcc
 CFLAGS=-Wall -pedantic -ansi -g -I $(INC)
 LIBRARIES=-lrt -pthread
 
-ARG_FILE=./Data/DataSmall.dat
+ARG_FILE=./data/DataSmall.dat
 ARG_N_LEVELS=5
 ARG_N_PROCESSES=10
 ARG_DELAY=100
