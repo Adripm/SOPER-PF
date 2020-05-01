@@ -17,6 +17,14 @@
 #include "sort.h"
 #include "utils.h"
 
+struct mq_attr attributes = {
+  .mq_flags = 0,
+  .mq_maxmsg = 10,
+  .mq_curmsgs = 0,
+  .mq_msgsize = 2000
+};
+
+
 Status bubble_sort(int *vector, int n_elements, int delay) {
     int i, j;
     int temp;
@@ -253,7 +261,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   Sort* sort_pointer = &sort;
   int fd_shm;
   struct sigaction handler_usr1;
-  struct mq_attr attributes = {0,10,0,sizeof(Mensaje)};
   mqd_t queue;
 
   /* Inicializar la estructura sort en memoria compartida */
@@ -297,9 +304,9 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   }
 
   /* Inicializar cola de mensajes */
-  queue = mq_open(MQ_NAME, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR, &attributes);
+  queue = mq_open(MQ_NAME, O_CREAT|O_RDONLY|O_EXCL, S_IRUSR|S_IWUSR, &attributes);
   if(queue == (mqd_t)-1){
-    fprintf(stderr, "Error opening the queue\n");
+    fprintf(stderr, "Error opening the queue:\n");
     return ERROR;
   }
 
