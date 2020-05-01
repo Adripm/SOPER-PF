@@ -15,7 +15,7 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
-#define SHM_NAME "/shm_sort"
+#define SHM_NAME "/shm_sort13"
 
 /* Type definitions. */
 

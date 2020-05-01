@@ -244,10 +244,18 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 }
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay){
-  Sort* sort = NULL;
+  Sort sort;
+  Sort* sort_pointer = &sort;
+  int fd_shm;
+
+  /* Inicializar la estructura sort en memoria compartida */
+  if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR) {
+      fprintf(stderr, "sort_multi_process - init_sort\n");
+      return ERROR;
+  }
 
   /* Crear memoria compartida */
-  int fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if(fd_shm==-1){
     fprintf(stderr, "Error creating the shared memory segment\n");
     return ERROR;
@@ -261,20 +269,14 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   }
 
   /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
-  sort = mmap(NULL, sizeof(*sort), PROT_READ|PROT_WRITE, MAP_SHARED, fd_shm, 0);
+  sort_pointer = mmap(NULL, sizeof(*sort_pointer), PROT_READ|PROT_WRITE, MAP_SHARED, fd_shm, 0);
   close(fd_shm);
 
-  if(sort==MAP_FAILED){
+  if(sort_pointer==MAP_FAILED){
     fprintf(stderr, "Error mapping the shared memory segment\n");
     shm_unlink(SHM_NAME);
     return ERROR;
   }
-
-  /* Inicializar la estructura sort en memoria compartida */
-  /*if (init_sort(file_name, &sort->sort, n_levels, n_processes, delay) == ERROR) {
-      fprintf(stderr, "sort_single_process - init_sort\n");
-      return ERROR;
-  }*/
 
   /* ################################### */
 
@@ -282,7 +284,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
   /* Cerrar memoria compartida */
   /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
-  munmap(sort, sizeof(*sort));
+  munmap(sort_pointer, sizeof(*sort_pointer));
   shm_unlink(SHM_NAME);
 
   return OK;
