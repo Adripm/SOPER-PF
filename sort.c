@@ -253,8 +253,19 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   Sort* sort_pointer = &sort;
   int fd_shm;
   struct sigaction handler_usr1;
-  struct mq_attr attributes = {0,10,0,sizeof(Mensaje)};
+  struct mq_attr attributes;
   mqd_t queue;
+
+  attributes.mq_maxmsg = 10;
+  attributes.mq_msgsize = sizeof(Mensaje);
+
+  /* Inicializar cola de mensajes */
+  queue = mq_open(MQ_NAME, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, &attributes);
+  if(queue == (mqd_t)-1){
+    perror("");
+    fprintf(stderr, "Error opening the queue %d\n",queue);
+    return ERROR;
+  }
 
   /* Inicializar la estructura sort en memoria compartida */
   if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR) {
@@ -295,14 +306,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     perror("sigaction");
     return ERROR;
   }
-
-  /* Inicializar cola de mensajes */
-  queue = mq_open(MQ_NAME, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR, &attributes);
-  if(queue == (mqd_t)-1){
-    fprintf(stderr, "Error opening the queue\n");
-    return ERROR;
-  }
-
 
   /* Iniciar trabajos */
   /* ################################### */
