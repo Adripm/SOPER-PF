@@ -253,8 +253,8 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   Sort* sort_pointer = &sort;
   int fd_shm;
   struct sigaction handler_usr1;
-  struct mq_attr attributes;
   mqd_t queue;
+  struct mq_attr attributes;
 
   attributes.mq_maxmsg = 10;
   attributes.mq_msgsize = sizeof(Mensaje);
