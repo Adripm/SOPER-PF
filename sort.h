@@ -47,11 +47,6 @@ typedef struct{
     pid_t ppid;
 } Sort;
 
-/* Estructura para los mensajes de la cola */
-typedef struct{
-  int foo; /* @PLACEHOLDER */
-}Mensaje;
-
 /* Prototypes. */
 
 /**

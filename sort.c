@@ -257,7 +257,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   struct mq_attr attributes;
 
   attributes.mq_maxmsg = 10;
-  attributes.mq_msgsize = sizeof(Mensaje);
+  attributes.mq_msgsize = sizeof(Task);
 
   /* Inicializar cola de mensajes */
   queue = mq_open(MQ_NAME, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, &attributes);
