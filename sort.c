@@ -324,13 +324,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
   return OK;
 }
 
-Status new_worker(Sort *sort, int level, int part){
+Status new_worker(){
 
   pid_t pid;
 
   pid = fork();
   if(pid==0){
-    solve_task(sort,level,part);
+    /*solve_task(sort,level,part);*/
     printf("Trabajador %d termina\n",getpid());
     exit(EXIT_SUCCESS);
   }
