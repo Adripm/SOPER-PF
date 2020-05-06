@@ -8,3 +8,47 @@ secuencia de salida -> envia señales sigterm a trabajadores e ilustrador
 Manejador de SIGINT -> función que cierra todo lo del programa
 
 ¿ Hacer variable global para estructura que maneja la memoria compartida ?
+
+¿ fork -> exec ?
+
+1 semaforo file
+
+procesos trabajadores:
+    2 pipes (trabajador a ilustrador e ilustrador a trabajador)
+    set alarm 1 segundo
+    manejador alarma -> actualizar ilustrador por pipe + set alarm 1 segundo
+
+    bucle while true
+        wait_task() -> mq_recieve
+        solve_task() -> semaforo
+        kill sigusr1 -> proceso principal
+
+    manejador sigterm -> end bucle
+
+
+    proceso ilustrador:
+
+    manejador sigterm -> terminar proceso
+
+    for trabajador:
+        read(trabajador) -> pipe1
+
+    dibujar()
+
+    for trabajador:
+        resume(trabajador) -> pipe2
+
+
+    proceso principal: ????
+
+    bucle:
+        encontrar tareas en nivel
+        enviar tareas a cola de mensajes
+
+        while 1:
+            block hasta sigusr1
+
+            if(nivel_terminado){
+                nivel++
+                break
+            }
