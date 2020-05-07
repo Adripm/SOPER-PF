@@ -158,6 +158,6 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay);
 
 /* Añadir doc */
-Status new_worker(int id);
+pid_t new_worker(int id);
 
 #endif

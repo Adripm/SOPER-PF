@@ -17,6 +17,8 @@
 #include "sort.h"
 #include "utils.h"
 
+Bool bucle_principal_interno = TRUE;
+
 Status bubble_sort(int *vector, int n_elements, int delay)
 {
     int i, j;
@@ -284,6 +286,7 @@ void usr1_handler_func(int sig)
 {
     /*printf("Señal %d recibida\n", sig);
     return;*/
+    printf("Señal %d recibida\n",sig);
 }
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
@@ -294,17 +297,20 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     struct sigaction handler_usr1;
     mqd_t queue;
     struct mq_attr attributes;
-    int fd_trabajadores[n_processes][2];
-    int fd_ilustrador[n_processes][2];
+    /*int fd_trabajadores[n_processes][2];
+    int fd_ilustrador[n_processes][2];*/ /* ISO C90 forbids variable length array, allocate memory instead */
     sem_t *sem;
-    int i, j, status_pipe;
-    Bool bucle_principal_interno = TRUE;
-    sigset_t process_mask;
+    int i, j; /*status_pipe;*/
+    sigset_t process_mask, empty_set;
 
     attributes.mq_maxmsg = 10;
     attributes.mq_msgsize = sizeof(Mensaje);
 
     sigemptyset(&process_mask);
+    sigaddset(&process_mask,SIGUSR1);
+    sigemptyset(&empty_set);
+
+    sigprocmask(SIG_BLOCK,&process_mask,NULL);
 
     /* Inicializar cola de mensajes */
     queue = mq_open(MQ_NAME, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, &attributes);
@@ -366,7 +372,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /*Crear pipes*/
 
-    for (i = 0; i < n_processes; i++)
+    /*for (i = 0; i < n_processes; i++)
     {
         status_pipe = pipe(fd_trabajadores[i]);
         if (status_pipe == -1)
@@ -374,9 +380,9 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             perror("Error creando la tuberia\n");
             exit(EXIT_FAILURE);
         }
-    }
+    }*/
 
-    for (i = 0; i < n_processes; i++)
+    /*for (i = 0; i < n_processes; i++)
     {
         status_pipe = pipe(fd_ilustrador[i]);
         if (status_pipe == -1)
@@ -384,7 +390,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             perror("Error creando la tuberia\n");
             exit(EXIT_FAILURE);
         }
-    }
+    }*/
 
     /* Iniciar trabajos */
     /* ################################### */
@@ -395,30 +401,34 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     printf("PID Proceso principal %d\n",getpid());
     for(i=0;i<sort.n_levels;i++)
     {
+        bucle_principal_interno = TRUE;
+
         /* Encontrar tareas en nivel correspondiente */
         for(j=0;j<get_number_parts(i, sort.n_levels);j++){
             /* Enviar tareas a cola de mensajes */
-            Mensaje new_msg;
+            /*Mensaje new_msg;
             new_msg.level=i;
             new_msg.part=j;
 
-            mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
+            mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);*/
         }
 
         printf("Nivel %d\n",i);
 
-        bucle_principal_interno = TRUE;
-        while (bucle_principal_interno)
+        while (bucle_principal_interno==TRUE)
         {
 
             /* Bloquear proceso hasta señal SIGUSR1 */
-            sigsuspend(&process_mask);
+            sigsuspend(&empty_set);
 
-            bucle_principal_interno = FALSE;
-            printf("señal sigusr1 recibida");
             /* Comprobar si las tareas en el nivel se han terminado */
-            /* Pasar de nivel */
-            /* Si no hay más niveles, fin del bucle principal*/
+            bucle_principal_interno = FALSE;
+            for(j=0;j<get_number_parts(i,sort.n_levels);j++){
+                if(sort.tasks[i][j].completed!=COMPLETED){
+                    bucle_principal_interno = TRUE;
+                    break;
+                }
+            }
 
         }
     }
@@ -437,7 +447,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     return OK;
 }
 
-Status new_worker(int id)
+pid_t new_worker(int id)
 {
 
     pid_t pid;
@@ -450,5 +460,5 @@ Status new_worker(int id)
         exit(EXIT_SUCCESS);
     }
 
-    return OK;
+    return pid;
 }
