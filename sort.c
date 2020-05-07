@@ -17,8 +17,6 @@
 #include "sort.h"
 #include "utils.h"
 
-Bool bucle_principal_interno = TRUE;
-
 Status bubble_sort(int *vector, int n_elements, int delay)
 {
     int i, j;
@@ -284,9 +282,7 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 
 void usr1_handler_func(int sig)
 {
-    /*printf("Señal %d recibida\n", sig);
-    return;*/
-    printf("Señal %d recibida\n",sig);
+    /*printf("Señal %d recibida\n",sig);*/
 }
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
@@ -299,9 +295,11 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     struct mq_attr attributes;
     /*int fd_trabajadores[n_processes][2];
     int fd_ilustrador[n_processes][2];*/ /* ISO C90 forbids variable length array, allocate memory instead */
-    sem_t *sem;
+    sem_t *sem_file;
     int i, j; /*status_pipe;*/
     sigset_t process_mask, empty_set;
+    Bool bucle_principal_interno = TRUE;
+    pid_t* trabajadores; /* Lista de PIDs de los trabajadores */
 
     attributes.mq_maxmsg = 10;
     attributes.mq_msgsize = sizeof(Mensaje);
@@ -346,15 +344,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
     sort_pointer = mmap(NULL, sizeof(*sort_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
-
+    close(fd_shm);
     if (sort_pointer == MAP_FAILED)
     {
         fprintf(stderr, "Error mapping the shared memory segment\n");
         shm_unlink(SHM_NAME);
         return ERROR;
     }
-
-    close(fd_shm);
 
     /* Inicializar manejador del proceso principal para la señal SIGUSR1 */
     handler_usr1.sa_handler = usr1_handler_func; /* funcion manejador */
@@ -368,7 +364,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /*Crear semáforo*/
-    sem = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+    sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
 
     /*Crear pipes*/
 
@@ -392,9 +388,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         }
     }*/
 
-    /* Iniciar trabajos */
+    /* Iniciar trabajadores */
     /* ################################### */
-    /*new_worker(sort_pointer);*/
+    trabajadores = (pid_t*) malloc(sizeof(pid_t)*n_processes);
+    if(!trabajadores){
+        return ERROR;
+    }
+    for(i=0;i<n_processes;i++){
+        trabajadores[i]=new_worker(sort_pointer,sem_file);
+    }
     /* ################################### */
 
     /* Bucle del proceso principal */
@@ -406,11 +408,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         /* Encontrar tareas en nivel correspondiente */
         for(j=0;j<get_number_parts(i, sort.n_levels);j++){
             /* Enviar tareas a cola de mensajes */
-            /*Mensaje new_msg;
+            Mensaje new_msg;
             new_msg.level=i;
             new_msg.part=j;
 
-            mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);*/
+            mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
+
+            /* Indicar tarea como SENT */
+            sort_pointer->tasks[i][j].completed = SENT;
+
         }
 
         printf("Nivel %d\n",i);
@@ -418,6 +424,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         while (bucle_principal_interno==TRUE)
         {
 
+            /* Desbloquea señal SIGUSR1 */
             /* Bloquear proceso hasta señal SIGUSR1 */
             sigsuspend(&empty_set);
 
@@ -433,32 +440,26 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         }
     }
 
+    /* Cleanup */ /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
+
+    /* Cerrar los trabajadores */
+    for(i=0;i<n_processes;i++){
+        kill(trabajadores[i],SIGTERM);
+        waitpid(trabajadores[i],NULL,0);
+    }
+    free(trabajadores);
+
     /* Cerrar la cola de mensajes */
     mq_close(queue);
     mq_unlink(MQ_NAME);
 
     /* Cerrar memoria compartida */
-    /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
     munmap(sort_pointer, sizeof(*sort_pointer));
     shm_unlink(SHM_NAME);
+
+    /* Cerrar el semaforo */
+    sem_close(sem_file);
     sem_unlink(SEM_NAME);
-    sem_close(sem);
 
     return OK;
-}
-
-pid_t new_worker(int id)
-{
-
-    pid_t pid;
-
-    pid = fork();
-    if (pid == 0)
-    {
-        /*solve_task(sort,level,part);*/
-        printf("Trabajador %d termina\n", getpid());
-        exit(EXIT_SUCCESS);
-    }
-
-    return pid;
 }

@@ -17,7 +17,7 @@ ARG_DELAY=100
 
 all: sort
 
-sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o
+sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o $(OBJ)/worker.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBRARIES)
 
 ##############################################
@@ -29,6 +29,9 @@ $(OBJ)/sort.o: sort.c sort.h global.h utils.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/utils.o: utils.c utils.h global.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/worker.o: worker.c sort.h global.h utils.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ##############################################
