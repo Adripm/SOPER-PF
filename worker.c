@@ -38,7 +38,7 @@ void term_handler_func(int sig){
     terminate_worker();
 }
 
-pid_t new_worker(Sort* shm_map_segment, sem_t* semaphore)
+pid_t new_worker(Sort* shm_map_segment)
 {
 
     pid_t pid;
@@ -55,8 +55,11 @@ pid_t new_worker(Sort* shm_map_segment, sem_t* semaphore)
         /* porque se hereda del proceso padre */
         sort_pointer = shm_map_segment;
 
-        /* Semaforo */
-        sem = semaphore;
+        /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
+        sem = sem_open(SEM_NAME,0);
+        if(sem==SEM_FAILED){
+            terminate_worker();
+        }
 
         /* Testing */
         self_pid = getpid();
