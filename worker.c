@@ -104,7 +104,7 @@ pid_t new_worker(Sort* shm_map_segment)
         while(bucle_trabajador){
             /* Esperar una tarea - BLOCK */
             Mensaje new_task;
-            Status result;
+            Status result = ERROR;
 
             printf("Trabajador %d espear por una tarea\n",self_pid);
             if(mq_receive(queue,(char*)&new_task,sizeof(new_task),NULL)==-1){
@@ -120,7 +120,8 @@ pid_t new_worker(Sort* shm_map_segment)
             /* Resolver tarea - CONCURRENCIA */
             sem_wait(sem);
             printf("Trabajador %d resuelve la tarea\n",self_pid);
-            result = solve_task(sort_pointer, new_task.level, new_task.part);
+            /*result = solve_task(sort_pointer, new_task.level, new_task.part);*/
+            printf(" -> Trabajador %d resolverá una tarea\n",self_pid);
             sem_post(sem);
             printf("Trabajador %d libera el archivo\n",self_pid);
 
