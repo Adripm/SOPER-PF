@@ -145,6 +145,7 @@ pid_t new_worker(Sort* shm_map_segment)
                 sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }else{
                 sort_pointer->tasks[new_task.level][new_task.part].completed = COMPLETED;
+                printf("Trabajador %d ha resuelto la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
                 printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
                 kill(getppid(),SIGUSR1);
             }
