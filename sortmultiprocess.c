@@ -184,7 +184,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /* Bucle del proceso principal */
     printf("PID Proceso principal %d\n",getpid());
-    for(i=0;i<sort_pointer->n_levels;i++)
+    for(i=0;i<sort.n_levels;i++)
     {
 
         printf("-------------Nivel %d-------------\n",i);
@@ -192,7 +192,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         bucle_principal_interno = TRUE;
 
         /* Encontrar tareas en nivel correspondiente */
-        for(j=0;j<get_number_parts(i, sort_pointer->n_levels);j++){
+        for(j=0;j<get_number_parts(i, sort.n_levels);j++){
             /* Enviar tareas a cola de mensajes */
             Mensaje new_msg;
             new_msg.level=i;
@@ -203,7 +203,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             printf("Tarea enviada\n");
 
             /* Indicar tarea como SENT */
-            sort_pointer->tasks[i][j].completed = SENT;
+            sort.tasks[i][j].completed = SENT;
 
         }
 
@@ -220,8 +220,8 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
             /* Comprobar si las tareas en el nivel se han terminado */
             bucle_principal_interno = FALSE;
-            for(j=0;j<get_number_parts(i,sort_pointer->n_levels);j++){
-                if(sort_pointer->tasks[i][j].completed!=COMPLETED){
+            for(j=0;j<get_number_parts(i,sort.n_levels);j++){
+                if(sort.tasks[i][j].completed!=COMPLETED){
                     bucle_principal_interno = TRUE;
                     printf("Todavía existen tareas en este nivel (Nivel %d, Tarea %d)\n",i,j);
                     break;
