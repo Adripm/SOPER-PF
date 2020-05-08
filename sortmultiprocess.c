@@ -214,6 +214,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             /* Desbloquea señal SIGUSR1 */
             /* Bloquear proceso hasta señal SIGUSR1 */
             sigsuspend(&empty_set);
+            sigprocmask(SIG_BLOCK,&process_mask,NULL); /* Se bloquea las señales USR1 que se puedan recibir durante la comprobacion */
             printf("Proceso principal reanudado\n");
 
             /* Comprobar si las tareas en el nivel se han terminado */
