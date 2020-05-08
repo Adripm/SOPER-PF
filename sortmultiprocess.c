@@ -57,7 +57,6 @@ void int_handler_func(int sig){
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
 {
-    Sort sort;
     int fd_shm;
     struct sigaction handler_usr1, handler_int;
     struct mq_attr attributes;
@@ -96,7 +95,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Redimensionar memoria compartida */
-    if (ftruncate(fd_shm, MAX_DATA) == -1)
+    if (ftruncate(fd_shm, sizeof(Sort)) == -1)
     { /* @PLACEHOLDER - Comprobar tamaño necesitado */
         fprintf(stderr, "Error resizing the shared memory segment\n");
         shm_unlink(SHM_NAME);
@@ -104,7 +103,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
-    sort_pointer = (Sort*) mmap(NULL, sizeof(Sort*), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
+    sort_pointer = (Sort*) mmap(NULL, sizeof(Sort), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
     close(fd_shm);
     if (sort_pointer == MAP_FAILED)
     {
@@ -114,12 +113,11 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Inicializar la estructura sort en memoria compartida */
-    if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR)
+    if (init_sort(file_name, sort_pointer, n_levels, n_processes, delay) == ERROR)
     {
         fprintf(stderr, "sort_multi_process - init_sort\n");
         return ERROR;
     }
-    sort_pointer = &sort;
 
     /* Inicializar manejador del proceso principal para la señal SIGUSR1 */
     handler_usr1.sa_handler = usr1_handler_func; /* funcion manejador */
@@ -178,13 +176,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
     for(i=0;i<n_processes;i++){
-        trabajadores[i]=new_worker();
+        trabajadores[i]=new_worker(sort_pointer);
     }
     /* ################################### */
 
     /* Bucle del proceso principal */
     printf("PID Proceso principal %d\n",getpid());
-    for(i=0;i<sort.n_levels;i++)
+    for(i=0;i<sort_pointer->n_levels;i++)
     {
 
         printf("-------------Nivel %d-------------\n",i);
@@ -192,7 +190,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         bucle_principal_interno = TRUE;
 
         /* Encontrar tareas en nivel correspondiente */
-        for(j=0;j<get_number_parts(i, sort.n_levels);j++){
+        for(j=0;j<get_number_parts(i, sort_pointer->n_levels);j++){
             /* Enviar tareas a cola de mensajes */
             Mensaje new_msg;
             new_msg.level=i;
@@ -203,7 +201,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             printf("Tarea enviada\n");
 
             /* Indicar tarea como SENT */
-            sort.tasks[i][j].completed = SENT;
+            sort_pointer->tasks[i][j].completed = SENT;
 
         }
 
@@ -220,8 +218,8 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
             /* Comprobar si las tareas en el nivel se han terminado */
             bucle_principal_interno = FALSE;
-            for(j=0;j<get_number_parts(i,sort.n_levels);j++){
-                if(sort.tasks[i][j].completed!=COMPLETED){
+            for(j=0;j<get_number_parts(i,sort_pointer->n_levels);j++){
+                if(sort_pointer->tasks[i][j].completed!=COMPLETED){
                     bucle_principal_interno = TRUE;
                     printf("Todavía existen tareas en este nivel (Nivel %d, Tarea %d)\n",i,j);
                     break;

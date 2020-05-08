@@ -17,12 +17,10 @@
 #include "sort.h"
 #include "utils.h"
 
-Sort* sort_pointer;
 sem_t* sem = NULL;
 mqd_t queue;
 
 void terminate_worker(){
-    munmap(sort_pointer, sizeof(Sort*));
     mq_close(queue);
     sem_close(sem);
     exit(EXIT_SUCCESS);
@@ -38,7 +36,7 @@ void term_handler_func(int sig){
     terminate_worker();
 }
 
-pid_t new_worker()
+pid_t new_worker(Sort* sort_pointer)
 {
 
     pid_t pid;
@@ -60,15 +58,7 @@ pid_t new_worker()
             return ERROR;
         }
 
-        /* Mapear estructura sort en la memoria compartida y cerrar descriptor de fichero de memoria compartida */
-        sort_pointer = (Sort*) mmap(NULL, sizeof(Sort*), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
-        close(fd_shm);
-        if (sort_pointer == MAP_FAILED)
-        {
-            fprintf(stderr, "Error mapping the shared memory segment\n");
-            shm_unlink(SHM_NAME);
-            return ERROR;
-        }
+        /* La estructura Sort ya está mapeada en este proceso */
 
         /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
         sem = sem_open(SEM_NAME,0);
