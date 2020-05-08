@@ -48,6 +48,7 @@ pid_t new_worker(Sort* shm_map_segment)
     {
         struct sigaction handler_alarm, handler_term;
         Bool bucle_trabajador = TRUE;
+        sigset_t waiting_message_set, empty_set;
 
         pid_t self_pid;
 
@@ -60,6 +61,13 @@ pid_t new_worker(Sort* shm_map_segment)
         if(sem==SEM_FAILED){
             terminate_worker();
         }
+
+        /* Signal masks */
+        sigemptyset(&empty_set);
+        sigemptyset(&waiting_message_set);
+        sigaddset(&waiting_message_set, SIGALRM);
+
+        sigprocmask(SIG_BLOCK, &empty_set, NULL);
 
         /* Testing */
         self_pid = getpid();
@@ -106,12 +114,17 @@ pid_t new_worker(Sort* shm_map_segment)
             Mensaje new_task;
             Status result = ERROR;
 
-            printf("Trabajador %d espear por una tarea\n",self_pid);
+            /* Mientras lee un mensaje bloqueará las señales SIGALRM */
+            sigprocmask(SIG_BLOCK, &waiting_message_set, NULL);
+            printf("Trabajador %d espera por una tarea\n",self_pid);
             if(mq_receive(queue,(char*)&new_task,sizeof(new_task),NULL)==-1){
                 fprintf(stderr,"Error reading new task on worker %d\n",self_pid);
-                terminate_worker();
+                /*terminate_worker();*/
+                continue;
             }
             printf("Trabajador %d ha leido una tarea\n",self_pid);
+            sigprocmask(SIG_BLOCK, &empty_set, NULL);
+            /* Una vez lee el mensaje, desbloquea las señales*/
 
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
@@ -120,6 +133,7 @@ pid_t new_worker(Sort* shm_map_segment)
             /* Resolver tarea - CONCURRENCIA */
             sem_wait(sem);
             printf("Trabajador %d resuelve la tarea\n",self_pid);
+
             /*result = solve_task(sort_pointer, new_task.level, new_task.part);*/
             printf(" -> Trabajador %d resolverá una tarea\n",self_pid);
             result = OK;
