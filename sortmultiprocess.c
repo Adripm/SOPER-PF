@@ -112,7 +112,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
-    sort_pointer = mmap(NULL, sizeof(Sort*), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
+    sort_pointer = (Sort*) mmap(NULL, sizeof(Sort*), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
     close(fd_shm);
     if (sort_pointer == MAP_FAILED)
     {
