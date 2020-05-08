@@ -178,7 +178,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
     for(i=0;i<n_processes;i++){
-        trabajadores[i]=new_worker(sort_pointer);
+        trabajadores[i]=new_worker();
     }
     /* ################################### */
 

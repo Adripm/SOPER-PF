@@ -17,10 +17,12 @@
 #include "sort.h"
 #include "utils.h"
 
+Sort* sort_pointer;
 sem_t* sem = NULL;
 mqd_t queue;
 
 void terminate_worker(){
+    munmap(sort_pointer, sizeof(Sort*));
     mq_close(queue);
     sem_close(sem);
     exit(EXIT_SUCCESS);
@@ -36,7 +38,7 @@ void term_handler_func(int sig){
     terminate_worker();
 }
 
-pid_t new_worker(Sort* shm_map_segment)
+pid_t new_worker()
 {
 
     pid_t pid;
@@ -47,11 +49,26 @@ pid_t new_worker(Sort* shm_map_segment)
         struct sigaction handler_alarm, handler_term;
         Bool bucle_trabajador = TRUE;
         sigset_t waiting_message_set, empty_set;
-
         pid_t self_pid;
+        int fd_shm;
 
-        /* La memoria compartida ya está mapeada en este proceso */
-        /* porque se hereda del proceso padre */
+        /* Obtener descriptor de fichero de memoria compartida */
+        fd_shm = shm_open(SHM_NAME, O_RDWR, 0);
+        if (fd_shm == -1)
+        {
+            fprintf(stderr, "Error creating the shared memory segment\n");
+            return ERROR;
+        }
+
+        /* Mapear estructura sort en la memoria compartida y cerrar descriptor de fichero de memoria compartida */
+        sort_pointer = (Sort*) mmap(NULL, sizeof(Sort*), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
+        close(fd_shm);
+        if (sort_pointer == MAP_FAILED)
+        {
+            fprintf(stderr, "Error mapping the shared memory segment\n");
+            shm_unlink(SHM_NAME);
+            return ERROR;
+        }
 
         /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
         sem = sem_open(SEM_NAME,0);
@@ -124,7 +141,7 @@ pid_t new_worker(Sort* shm_map_segment)
             /* Una vez lee el mensaje, desbloquea las señales*/
 
             /* Indicar tarea como PROCESSING */
-            shm_map_segment->tasks[new_task.level][new_task.part].completed = PROCESSING;
+            sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
 
             printf("Trabajador %d espera para poder acceder al archivo\n",self_pid);
             /* Resolver tarea - CONCURRENCIA */
@@ -139,9 +156,9 @@ pid_t new_worker(Sort* shm_map_segment)
             printf("Trabajador %d libera el archivo\n",self_pid);
 
             if(result==ERROR){
-                shm_map_segment->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
+                sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }else{
-                shm_map_segment->tasks[new_task.level][new_task.part].completed = COMPLETED;
+                sort_pointer->tasks[new_task.level][new_task.part].completed = COMPLETED;
                 printf("Trabajador %d ha resuelto la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
                 printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
                 kill(getppid(),SIGUSR1);
