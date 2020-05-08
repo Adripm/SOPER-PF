@@ -20,7 +20,6 @@
 int num_workers;
 pid_t* trabajadores; /* Lista de PIDs de los trabajadores */
 mqd_t queue;
-sem_t* sem_file;
 Sort* sort_pointer;
 
 void terminate_process(){
@@ -41,7 +40,6 @@ void terminate_process(){
     shm_unlink(SHM_NAME);
 
     /* Cerrar el semaforo */
-    sem_close(sem_file);
     sem_unlink(SEM_NAME);
 
     exit(EXIT_SUCCESS);
@@ -67,6 +65,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int fd_ilustrador[n_processes][2];*/ /* ISO C90 forbids variable length array, allocate memory instead */
     int i, j; /*status_pipe;*/
     sigset_t process_mask, empty_set;
+    sem_t* sem_file;
     Bool bucle_principal_interno = TRUE;
     sort_pointer = &sort;
     num_workers = n_processes;
@@ -145,6 +144,10 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /*Crear semáforo*/
     sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
+    if(sem_file == SEM_FAILED){
+        terminate_process();
+    }
+    sem_close(sem_file); /* El proceso principal no usará el semaforo por lo que cierra su descriptor de fichero */
 
     /*Crear pipes*/
 

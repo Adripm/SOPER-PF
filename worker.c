@@ -122,6 +122,8 @@ pid_t new_worker(Sort* shm_map_segment)
             printf("Trabajador %d resuelve la tarea\n",self_pid);
             /*result = solve_task(sort_pointer, new_task.level, new_task.part);*/
             printf(" -> Trabajador %d resolverá una tarea\n",self_pid);
+            result = OK;
+
             sem_post(sem);
             printf("Trabajador %d libera el archivo\n",self_pid);
 
