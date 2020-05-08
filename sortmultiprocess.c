@@ -57,7 +57,6 @@ void int_handler_func(int sig){
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
 {
-    Sort sort;
     int fd_shm;
     struct sigaction handler_usr1, handler_int;
     struct mq_attr attributes;
@@ -67,7 +66,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     sigset_t process_mask, empty_set;
     sem_t* sem_file;
     Bool bucle_principal_interno = TRUE;
-    sort_pointer = &sort;
+    sort_pointer = NULL;
     num_workers = n_processes;
 
     attributes.mq_maxmsg = 10;
@@ -89,7 +88,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Inicializar la estructura sort en memoria compartida */
-    if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR)
+    if (init_sort(file_name, sort_pointer, n_levels, n_processes, delay) == ERROR)
     {
         fprintf(stderr, "sort_multi_process - init_sort\n");
         return ERROR;
@@ -184,7 +183,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /* Bucle del proceso principal */
     printf("PID Proceso principal %d\n",getpid());
-    for(i=0;i<sort.n_levels;i++)
+    for(i=0;i<sort_pointer->n_levels;i++)
     {
 
         printf("-------------Nivel %d-------------\n",i);
@@ -192,7 +191,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         bucle_principal_interno = TRUE;
 
         /* Encontrar tareas en nivel correspondiente */
-        for(j=0;j<get_number_parts(i, sort.n_levels);j++){
+        for(j=0;j<get_number_parts(i, sort_pointer->n_levels);j++){
             /* Enviar tareas a cola de mensajes */
             Mensaje new_msg;
             new_msg.level=i;
