@@ -88,13 +88,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
 
-    /* Inicializar la estructura sort en memoria compartida */
-    if (init_sort(file_name, sort_pointer, n_levels, n_processes, delay) == ERROR)
-    {
-        fprintf(stderr, "sort_multi_process - init_sort\n");
-        return ERROR;
-    }
-
     /* Crear memoria compartida */
     fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd_shm == -1)
@@ -118,6 +111,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     {
         fprintf(stderr, "Error mapping the shared memory segment\n");
         shm_unlink(SHM_NAME);
+        return ERROR;
+    }
+
+    /* Inicializar la estructura sort en memoria compartida */
+    if (init_sort(file_name, sort_pointer, n_levels, n_processes, delay) == ERROR)
+    {
+        fprintf(stderr, "sort_multi_process - init_sort\n");
         return ERROR;
     }
 
