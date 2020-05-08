@@ -43,6 +43,8 @@ void terminate_process(){
     /* Cerrar el semaforo */
     sem_close(sem_file);
     sem_unlink(SEM_NAME);
+
+    exit(EXIT_SUCCESS);
 }
 
 void usr1_handler_func(int sig)
@@ -224,7 +226,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         }
     }
 
-    /* Cleanup */ /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
+    /* Cleanup */ /* Funcion que maneja la salida del proceso */
     terminate_process();
 
     return OK;
