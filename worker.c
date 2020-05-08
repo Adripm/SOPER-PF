@@ -86,8 +86,8 @@ pid_t new_worker(Sort* shm_map_segment)
         /* Inicializar el manejador para la señal SIGTERM */
         /* Debe terminar la ejecucion del bucle del trabajador */
         handler_term.sa_handler = term_handler_func;
-        sigemptyset(&(handler_alarm.sa_mask));
-        handler_alarm.sa_flags = 0;
+        sigemptyset(&(handler_term.sa_mask));
+        handler_term.sa_flags = 0;
 
         if(sigaction(SIGTERM, &handler_term, NULL) < 0){
             perror("sigaction");
