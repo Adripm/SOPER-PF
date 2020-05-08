@@ -22,7 +22,6 @@ sem_t* sem = NULL;
 mqd_t queue;
 
 void terminate_worker(){
-    munmap(sort_pointer,sizeof(*sort_pointer));
     mq_close(queue);
     sem_close(sem);
     exit(EXIT_SUCCESS);
