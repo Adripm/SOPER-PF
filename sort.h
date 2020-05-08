@@ -15,9 +15,9 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
-#define SHM_NAME "/shm_sort"
-#define MQ_NAME "/mq_tasks"
-#define SEM_NAME "/sem"
+#define SHM_NAME "/shm_sort565"
+#define MQ_NAME "/mq_tasks565"
+#define SEM_NAME "/sem565"
 
 /* Type definitions. */
 

@@ -57,6 +57,7 @@ void int_handler_func(int sig){
 
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
 {
+    Sort sort;
     int fd_shm;
     struct sigaction handler_usr1, handler_int;
     struct mq_attr attributes;
@@ -67,6 +68,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     sem_t* sem_file;
     Bool bucle_principal_interno = TRUE;
     num_workers = n_processes;
+    sort_pointer = &sort;
 
     attributes.mq_maxmsg = 10;
     attributes.mq_msgsize = sizeof(Mensaje);
