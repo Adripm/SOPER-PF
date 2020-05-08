@@ -66,7 +66,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     sigset_t process_mask, empty_set;
     sem_t* sem_file;
     Bool bucle_principal_interno = TRUE;
-    sort_pointer = NULL;
     num_workers = n_processes;
 
     attributes.mq_maxmsg = 10;
