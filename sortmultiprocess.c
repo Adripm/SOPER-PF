@@ -68,7 +68,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     sem_t* sem_file;
     Bool bucle_principal_interno = TRUE;
     num_workers = n_processes;
-    sort_pointer = &sort;
 
     attributes.mq_maxmsg = 10;
     attributes.mq_msgsize = sizeof(Mensaje);
@@ -115,11 +114,12 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /* Inicializar la estructura sort en memoria compartida */
-    if (init_sort(file_name, sort_pointer, n_levels, n_processes, delay) == ERROR)
+    if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR)
     {
         fprintf(stderr, "sort_multi_process - init_sort\n");
         return ERROR;
     }
+    sort_pointer = &sort;
 
     /* Inicializar manejador del proceso principal para la señal SIGUSR1 */
     handler_usr1.sa_handler = usr1_handler_func; /* funcion manejador */
