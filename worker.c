@@ -49,12 +49,17 @@ pid_t new_worker(Sort* shm_map_segment, sem_t* semaphore)
         struct sigaction handler_alarm, handler_term;
         Bool bucle_trabajador = TRUE;
 
+        pid_t self_pid;
+
         /* La memoria compartida ya está mapeada en este proceso */
         /* porque se hereda del proceso padre */
         sort_pointer = shm_map_segment;
 
         /* Semaforo */
         sem = semaphore;
+
+        /* Testing */
+        self_pid = getpid();
 
         /* Inicializar el manejador para la señal SIGALARM*/
         /* Mandar una sñal SIGALARM cada segundo*/
@@ -91,29 +96,36 @@ pid_t new_worker(Sort* shm_map_segment, sem_t* semaphore)
         /* Inicia el bucle de señales SIGALARM */
         alarm(1);
 
+        printf("Trabajador %d entrando en bucle\n",self_pid);
         /* Bucle del proceso trabajador */
         while(bucle_trabajador){
             /* Esperar una tarea - BLOCK */
             Mensaje new_task;
             Status result;
 
+            printf("Trabajador %d espear por una tarea\n",self_pid);
             if(mq_receive(queue,(char*)&new_task,sizeof(new_task),NULL)==-1){
-                fprintf(stderr,"Error reading new task on worker %d\n",getpid());
+                fprintf(stderr,"Error reading new task on worker %d\n",self_pid);
                 terminate_worker();
             }
+            printf("Trabajador %d ha leido una tarea\n",self_pid);
 
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
 
+            printf("Trabajador %d espera para poder acceder al archivo\n",self_pid);
             /* Resolver tarea - CONCURRENCIA */
             sem_wait(sem);
+            printf("Trabajador %d resuelve la tarea\n",self_pid);
             result = solve_task(sort_pointer, new_task.level, new_task.part);
             sem_post(sem);
+            printf("Trabajador %d libera el archivo\n",self_pid);
 
             if(result==ERROR){
                 sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }else{
                 sort_pointer->tasks[new_task.level][new_task.part].completed = COMPLETED;
+                printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
                 kill(getppid(),SIGUSR1);
             }
 
