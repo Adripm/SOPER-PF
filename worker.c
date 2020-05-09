@@ -17,8 +17,9 @@
 #include "sort.h"
 #include "utils.h"
 
-sem_t* sem = NULL;
+sem_t* sem;
 mqd_t queue;
+Sort* shm_sort;
 
 void terminate_worker(){
     mq_close(queue);
@@ -50,15 +51,8 @@ pid_t new_worker(Sort* sort_pointer)
         pid_t self_pid;
         int fd_shm;
 
-        /* Obtener descriptor de fichero de memoria compartida */
-        fd_shm = shm_open(SHM_NAME, O_RDWR, 0);
-        if (fd_shm == -1)
-        {
-            fprintf(stderr, "Error creating the shared memory segment\n");
-            return ERROR;
-        }
-
         /* La estructura Sort ya está mapeada en este proceso */
+        shm_sort = sort_pointer;
 
         /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
         sem = sem_open(SEM_NAME,0);
