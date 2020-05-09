@@ -149,16 +149,13 @@ pid_t new_worker(Sort* sort_pointer)
             #endif
 
             /* Resolver tarea - CONCURRENCIA */
-            /* Nunca existirá concurrencia si los trabajadores acceden a diferentes tareas */
-            /* sem_wait(sem); */
+            /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
 
             #ifdef DEBUG
             printf("Trabajador %d resuelve la tarea\n",self_pid);
             #endif
 
             result = solve_task(sort_pointer, new_task.level, new_task.part);
-
-            /*sem_post(sem);*/
 
             #ifdef DEBUG
             printf("Trabajador %d libera el archivo\n",self_pid);
