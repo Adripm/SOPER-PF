@@ -241,6 +241,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
                     #ifdef DEBUG
                     printf("Todavía existen tareas en este nivel (Nivel %d, Tarea %d)\n",i,j);
+                    printf("El estado de la tarea es: :%d\n",sort_pointer->tasks[i][j].completed);
                     #endif
 
                     break;
