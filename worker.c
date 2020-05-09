@@ -141,17 +141,18 @@ pid_t new_worker(Sort* sort_pointer)
             sigprocmask(SIG_BLOCK, &empty_set, NULL);
             /* Una vez lee el mensaje, desbloquea las señales*/
 
+            /* Resolver tarea - CONCURRENCIA */
+            /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
+            /* Pero si podría existir concurrencia entre el proceso principal y el trabajador */
+            sem_wait(sem);
+            sem_post(sem);
+
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
 
             #ifdef DEBUG
             printf("Trabajador %d espera para poder acceder al archivo\n",self_pid);
             #endif
-
-            /* Resolver tarea - CONCURRENCIA */
-            /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
-            sem_wait(sem);
-            sem_post(sem);
 
             #ifdef DEBUG
             printf("Trabajador %d resuelve la tarea\n",self_pid);
