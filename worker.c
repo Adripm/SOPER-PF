@@ -49,7 +49,6 @@ pid_t new_worker(Sort* sort_pointer)
         Bool bucle_trabajador = TRUE;
         sigset_t waiting_message_set, empty_set;
         pid_t self_pid;
-        int fd_shm;
 
         /* La estructura Sort ya está mapeada en este proceso */
         shm_sort = sort_pointer;
