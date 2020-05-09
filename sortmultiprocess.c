@@ -144,7 +144,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
 
     /*Crear semáforo*/
-    sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+    sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
     if(sem_file == SEM_FAILED){
         terminate_process();
     }
