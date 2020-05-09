@@ -52,7 +52,6 @@ pid_t new_worker(Sort* sort_pointer)
 
         /* La estructura Sort ya está mapeada en este proceso */
         shm_sort = sort_pointer;
-
         /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
         sem = sem_open(SEM_NAME,0);
         if(sem==SEM_FAILED){

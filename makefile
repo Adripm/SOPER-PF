@@ -59,7 +59,7 @@ run: sort
 runv: sort
 	@echo "Launching program with valgrind..."
 	@sleep 1
-	@valgrind ./sort $(ARG_FILE) $(ARG_N_LEVELS) $(ARG_N_PROCESSES) $(ARG_DELAY)
+	@valgrind --leak-check=full ./sort $(ARG_FILE) $(ARG_N_LEVELS) $(ARG_N_PROCESSES) $(ARG_DELAY)
 
 runve: sort
 	@echo "Launching program with valgrind and checking errors..."
