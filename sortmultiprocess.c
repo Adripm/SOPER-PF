@@ -65,9 +65,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int fd_shm;
     struct sigaction handler_usr1, handler_int;
     struct mq_attr attributes;
-    /*int fd_trabajadores[n_processes][2];
-    int fd_ilustrador[n_processes][2];*/ /* ISO C90 forbids variable length array, allocate memory instead */
-    int i, j; /*status_pipe;*/
+    int i, j, status_pipe; 
     sigset_t process_mask, empty_set;
     Bool bucle_principal_interno = TRUE;
     num_workers = n_processes;
@@ -152,25 +150,20 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     /*Crear pipes*/
 
-    /*for (i = 0; i < n_processes; i++)
-    {
-        status_pipe = pipe(fd_trabajadores[i]);
+    status_pipe = pipe(enviar_estado);
         if (status_pipe == -1)
         {
             perror("Error creando la tuberia\n");
             exit(EXIT_FAILURE);
         }
-    }*/
 
-    /*for (i = 0; i < n_processes; i++)
-    {
-        status_pipe = pipe(fd_ilustrador[i]);
+    status_pipe = pipe(recibir_permiso);
         if (status_pipe == -1)
         {
             perror("Error creando la tuberia\n");
             exit(EXIT_FAILURE);
         }
-    }*/
+
 
     /* Iniciar trabajadores */
     /* ################################### */

@@ -15,12 +15,15 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
-#define SHM_NAME "/shm_sort"
-#define MQ_NAME "/mq_tasks"
-#define SEM_NAME "/sem"
+#define SHM_NAME "/shm_sort2"
+#define MQ_NAME "/mq_tasks2"
+#define SEM_NAME "/sem2"
 
 #define DEBUG 0
 #define DELAY 0
+
+int enviar_estado[2];
+int recibir_permiso[2];
 
 /* Type definitions. */
 
