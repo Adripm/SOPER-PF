@@ -210,9 +210,10 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             /* Si los trabajadores resuelven la tarea antes de que el proceso principal la marque como enviada ocurrirá un error */
             /* Por ello los trabajadores esperaran al semaforo abrirse (se inicializa cerrado)*/
 
-            /* Indicar tarea como SENT */
-            sort_pointer->tasks[i][j].completed = SENT;
+            sem_wait(sem_file);
             mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
+            sort_pointer->tasks[i][j].completed = SENT; /* Indicar tarea como SENT */
+            sem_post(sem_post);
 
             #ifdef DEBUG
             printf("Tarea enviada\n");

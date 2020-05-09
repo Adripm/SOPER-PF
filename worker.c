@@ -150,6 +150,8 @@ pid_t new_worker(Sort* sort_pointer)
 
             /* Resolver tarea - CONCURRENCIA */
             /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
+            sem_wait(sem);
+            sem_post(sem);
 
             #ifdef DEBUG
             printf("Trabajador %d resuelve la tarea\n",self_pid);
