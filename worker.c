@@ -144,8 +144,8 @@ pid_t new_worker(Sort* sort_pointer)
             /* Resolver tarea - CONCURRENCIA */
             /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
             /* Pero si podría existir concurrencia entre el proceso principal y el trabajador */
-            sem_wait(sem);
-            sem_post(sem);
+            /*sem_wait(sem);
+            sem_post(sem);*/
 
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
