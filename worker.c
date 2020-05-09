@@ -155,7 +155,7 @@ pid_t new_worker(Sort* sort_pointer)
             printf("Trabajador %d resuelve la tarea\n",self_pid);
             #endif
 
-            result = solve_task(sort_pointer, new_task.level, new_task.part);*/
+            result = solve_task(sort_pointer, new_task.level, new_task.part);
 
             sem_post(sem);
 
