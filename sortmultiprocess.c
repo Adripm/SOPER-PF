@@ -213,7 +213,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             sem_wait(sem_file);
             mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
             sort_pointer->tasks[i][j].completed = SENT; /* Indicar tarea como SENT */
-            sem_post(sem_post);
+            sem_post(sem_file);
 
             #ifdef DEBUG
             printf("Tarea enviada\n");
