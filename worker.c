@@ -164,18 +164,18 @@ pid_t new_worker(Sort* sort_pointer)
             printf("Trabajador %d libera el archivo\n",self_pid);
             #endif
 
-            if(result==ERROR){
-                sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
-            }else{
+            if(result==OK){
                 sort_pointer->tasks[new_task.level][new_task.part].completed = COMPLETED;
-
-                #ifdef DEBUG
-                printf("Trabajador %d ha resuelto la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
-                printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
-                #endif
-
-                kill(getppid(),SIGUSR1);
+            }else{
+                sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }
+
+            #ifdef DEBUG
+            printf("Trabajador %d ha terminado la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
+            printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
+            #endif
+
+            kill(getppid(),SIGUSR1);
 
         }
 

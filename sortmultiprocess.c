@@ -244,6 +244,24 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
                     printf("El estado de la tarea es: :%d\n",sort_pointer->tasks[i][j].completed);
                     #endif
 
+                    if(sort_pointer->tasks[i][j].completed==INCOMPLETE){
+                        /* Si la tarea está incompleta, se volverá a mandar */
+                        /* El estado incompleto solo se indica si solve_task ha retornado un error */
+                        /* Por lo tanto, aunque se vuelva a mandar la misma tarea, nunca habrá más de un proceso resolviéndola */
+
+                        Mensaje new_msg;
+                        new_msg.level=i;
+                        new_msg.part=j;
+
+                        mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
+
+                        sort_pointer->tasks[i][j].completed = SENT;
+
+                        #ifdef DEBUG
+                        printf("La tarea %d del nivel %d ha sido enviada de nuevo porque estaba incompleta",j,i);
+                        #endif
+                    }
+
                     break;
                 }
             }
