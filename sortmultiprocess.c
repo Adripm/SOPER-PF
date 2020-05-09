@@ -68,7 +68,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int fd_shm;
     struct sigaction handler_usr1, handler_int;
     struct mq_attr attributes;
-    int i, j, status_pipe;
+    int i, j;
     sigset_t process_mask, empty_set;
     Bool bucle_principal_interno = TRUE;
 
@@ -256,8 +256,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             }
         }
 #ifdef DEBUG
-        printf("Siguiente nivel de tareas\n");
+
+       printf("Siguiente nivel de tareas\n");
 #endif
+    }
+
+    printf("Algoritmo finalizado. Resultado:\n");
+    for (i = 0; i<sort_pointer->n_elements; i++)
+    {
+        printf("%d ", sort_pointer->data[i]);
     }
 
     /* Cleanup */ /* Funcion que maneja la salida del proceso */
