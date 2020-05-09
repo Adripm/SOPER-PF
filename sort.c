@@ -32,7 +32,10 @@ Status bubble_sort(int *vector, int n_elements, int delay)
         for (j = 0; j < n_elements - i - 1; j++)
         {
             /* Delay. */
+            #ifdef DELAY
             fast_sleep(delay);
+            #endif
+
             if (vector[j] > vector[j + 1])
             {
                 temp = vector[j];
@@ -65,7 +68,10 @@ Status merge(int *vector, int middle, int n_elements, int delay)
     for (k = 0; k < n_elements; k++)
     {
         /* Delay. */
+        #ifdef DELAY
         fast_sleep(delay);
+        #endif
+        
         if ((i < middle) && ((j >= n_elements) || (aux[i] < aux[j])))
         {
             vector[k] = aux[i];

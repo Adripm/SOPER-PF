@@ -20,6 +20,7 @@
 #define SEM_NAME "/sem"
 
 #define DEBUG 0
+#define DELAY 0
 
 /* Type definitions. */
 
