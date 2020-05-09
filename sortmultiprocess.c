@@ -208,7 +208,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             #endif
 
             /* Si los trabajadores resuelven la tarea antes de que el proceso principal la marque como enviada ocurrirá un error */
-            /* Por ello los trabajadores esperaran al semaforo abrirse (se inicializa cerrado)*/
+            /* Por ello los trabajadores esperaran al semaforo despues de leer la tarea */
 
             sem_wait(sem_file);
             mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
