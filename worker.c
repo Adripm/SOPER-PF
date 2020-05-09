@@ -133,15 +133,15 @@ pid_t new_worker(Sort* sort_pointer)
             #ifdef DEBUG
             printf("Trabajador %d ha leido una tarea\n",self_pid);
             #endif
-
-            sigprocmask(SIG_BLOCK, &default_set, NULL);
-            /* Una vez lee el mensaje, desbloquea las señales*/
-
+            
             /* Resolver tarea - CONCURRENCIA */
             /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
             /* Pero si podría existir concurrencia entre el proceso principal y el trabajador */
             sem_wait(sem);
             sem_post(sem);
+
+            sigprocmask(SIG_BLOCK, &default_set, NULL);
+            /* Una vez lee el mensaje, desbloquea las señales*/
 
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
