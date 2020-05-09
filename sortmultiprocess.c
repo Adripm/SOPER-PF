@@ -51,7 +51,10 @@ void usr1_handler_func(int sig)
 }
 
 void int_handler_func(int sig){
+    #ifdef DEBUG
     printf("Señal %d recibida. Terminando proceso...\n",sig);
+    #endif
+
     terminate_process();
 }
 
@@ -181,11 +184,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     /* ################################### */
 
     /* Bucle del proceso principal */
+    #ifdef DEBUG
     printf("PID Proceso principal %d\n",getpid());
+    #endif
+
     for(i=0;i<sort_pointer->n_levels;i++)
     {
-
+        #ifdef DEBUG
         printf("-------------Nivel %d-------------\n",i);
+        #endif
 
         bucle_principal_interno = TRUE;
 
@@ -196,9 +203,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
             new_msg.level=i;
             new_msg.part=j;
 
+            #ifdef DEBUG
             printf("Enviando tarea %d del nivel %d\n",j,i);
+            #endif
+
             mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
+
+            #ifdef DEBUG
             printf("Tarea enviada\n");
+            #endif
 
             /* Indicar tarea como SENT */
             sort_pointer->tasks[i][j].completed = SENT;
@@ -208,26 +221,36 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         while (bucle_principal_interno==TRUE)
         {
 
+            #ifdef DEBUG
             printf("Proceso principal bloqueado hasta recibir SIGUSR1\n");
+            #endif
             /* Desbloquea señal SIGUSR1 */
             /* Bloquear proceso hasta señal SIGUSR1 */
             sigsuspend(&empty_set);
             /* Se vuelven a bloquar las señales USR1 que se puedan recibir durante la comprobacion */
 
+            #ifdef DEBUG
             printf("Proceso principal reanudado\n");
+            #endif
 
             /* Comprobar si las tareas en el nivel se han terminado */
             bucle_principal_interno = FALSE;
             for(j=0;j<get_number_parts(i,sort_pointer->n_levels);j++){
                 if(sort_pointer->tasks[i][j].completed!=COMPLETED){
                     bucle_principal_interno = TRUE;
+
+                    #ifdef DEBUG
                     printf("Todavía existen tareas en este nivel (Nivel %d, Tarea %d)\n",i,j);
+                    #endif
+
                     break;
                 }
             }
 
         }
+        #ifdef DEBUG
         printf("Siguiente nivel de tareas\n");
+        #endif
     }
 
     /* Cleanup */ /* Funcion que maneja la salida del proceso */

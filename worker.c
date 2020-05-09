@@ -111,7 +111,10 @@ pid_t new_worker(Sort* sort_pointer)
         /* Inicia el bucle de señales SIGALARM */
         alarm(1);
 
+        #ifdef DEBUG
         printf("Trabajador %d entrando en bucle\n",self_pid);
+        #endif
+
         /* Bucle del proceso trabajador */
         while(bucle_trabajador){
             /* Esperar una tarea - BLOCK */
@@ -120,37 +123,61 @@ pid_t new_worker(Sort* sort_pointer)
 
             /* Mientras lee un mensaje bloqueará las señales SIGALRM */
             sigprocmask(SIG_BLOCK, &waiting_message_set, NULL);
+
+            #ifdef DEBUG
             printf("Trabajador %d espera por una tarea\n",self_pid);
+            #endif
+
             if(mq_receive(queue,(char*)&new_task,sizeof(new_task),NULL)==-1){
                 fprintf(stderr,"Error reading new task on worker %d\n",self_pid);
                 /*terminate_worker();*/
                 continue;
             }
+
+            #ifdef DEBUG
             printf("Trabajador %d ha leido una tarea\n",self_pid);
+            #endif
+
             sigprocmask(SIG_BLOCK, &empty_set, NULL);
             /* Una vez lee el mensaje, desbloquea las señales*/
 
             /* Indicar tarea como PROCESSING */
             sort_pointer->tasks[new_task.level][new_task.part].completed = PROCESSING;
 
+            #ifdef DEBUG
             printf("Trabajador %d espera para poder acceder al archivo\n",self_pid);
+            #endif
+
             /* Resolver tarea - CONCURRENCIA */
             sem_wait(sem);
+
+            #ifdef DEBUG
             printf("Trabajador %d resuelve la tarea\n",self_pid);
+            #endif
 
             /*result = solve_task(sort_pointer, new_task.level, new_task.part);*/
+            #ifdef DEBUG
             printf(" -> Trabajador %d resolverá una tarea\n",self_pid);
+            #endif
+
             result = OK;
 
             sem_post(sem);
+
+            #ifdef DEBUG
             printf("Trabajador %d libera el archivo\n",self_pid);
+            #endif
 
             if(result==ERROR){
                 sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }else{
                 sort_pointer->tasks[new_task.level][new_task.part].completed = COMPLETED;
+
+                #ifdef DEBUG
                 printf("Trabajador %d ha resuelto la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
                 printf("Trabajador %d envía señal SIGUSR1 a proceso principal\n",self_pid);
+                #endif
+
                 kill(getppid(),SIGUSR1);
             }
 
