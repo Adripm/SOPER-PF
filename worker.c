@@ -47,7 +47,7 @@ pid_t new_worker(Sort* sort_pointer)
     {
         struct sigaction handler_alarm, handler_term;
         Bool bucle_trabajador = TRUE;
-        sigset_t waiting_message_set, empty_set;
+        sigset_t waiting_message_set, default_set;
         pid_t self_pid;
 
         /* La estructura Sort ya está mapeada en este proceso */
@@ -60,11 +60,14 @@ pid_t new_worker(Sort* sort_pointer)
         }
 
         /* Signal masks */
-        sigemptyset(&empty_set);
+        sigemptyset(&default_set);
         sigemptyset(&waiting_message_set);
-        sigaddset(&waiting_message_set, SIGALRM);
 
-        sigprocmask(SIG_BLOCK, &empty_set, NULL);
+        sigaddset(&waiting_message_set, SIGINT);
+        sigaddset(&waiting_message_set, SIGALRM);
+        sigaddset(&default_set, SIGINT);
+
+        sigprocmask(SIG_BLOCK, &default_set, NULL);
 
         /* Testing */
         self_pid = getpid();
@@ -131,7 +134,7 @@ pid_t new_worker(Sort* sort_pointer)
             printf("Trabajador %d ha leido una tarea\n",self_pid);
             #endif
 
-            sigprocmask(SIG_BLOCK, &empty_set, NULL);
+            sigprocmask(SIG_BLOCK, &default_set, NULL);
             /* Una vez lee el mensaje, desbloquea las señales*/
 
             /* Resolver tarea - CONCURRENCIA */
