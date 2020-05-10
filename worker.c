@@ -32,9 +32,7 @@ void terminate_worker(){
 
 void alarm_handler_func(int sig)
 {
-    /* Cuando llega la señal SIGALRM se enviará de nuevo un segundo después */
-    alarm(1);
-    print("%d received alarm\n",getpid());
+    printf("%d received alarm\n",getpid());
 }
 
 void term_handler_func(int sig){
@@ -117,9 +115,6 @@ pid_t new_worker(Sort* sort_pointer)
         #ifdef DEBUG
         printf("Trabajador %d entrando en bucle\n",self_pid);
         #endif
-
-        /* Inicia el bucle de señales SIGALARM */
-        alarm(1);
 
         /* Bucle del proceso trabajador */
         while(bucle_trabajador){

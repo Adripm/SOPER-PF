@@ -23,6 +23,7 @@ pid_t* printer;
 mqd_t queue;
 Sort *sort_pointer;
 sem_t *sem_file = NULL;
+int alarm_flag = 0;
 
 void terminate_process()
 {
@@ -72,10 +73,14 @@ void int_handler_func(int sig)
     terminate_process();
 }
 
+void alarm_handler_func_main(int sig){
+    alarm_flag = 1;
+}
+
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
 {
     int fd_shm;
-    struct sigaction handler_usr1, handler_int;
+    struct sigaction handler_usr1, handler_int, handler_alarm;
     struct mq_attr attributes;
     int i, j;
     sigset_t process_mask, empty_set;
@@ -87,6 +92,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 
     sigemptyset(&process_mask);
     sigaddset(&process_mask, SIGUSR1);
+    sigaddset(&process_mask, SIGALRM);
     sigemptyset(&empty_set);
 
     sigprocmask(SIG_BLOCK, &process_mask, NULL);
@@ -155,6 +161,17 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
 
+    /* Inicializar el manejador del proceso principal para la señal SIGALRM */
+    handler_alarm.sa_handler = alarm_handler_func_main;
+    sigemptyset(&(handler_alarm.sa_mask));
+    handler_alarm.sa_flags = 0;
+
+    if (sigaction(SIGINT, &handler_alarm, NULL) < 0)
+    {
+        perror("sigaction");
+        return ERROR;
+    }
+
     /*Crear semáforo*/
     sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
     if (sem_file == SEM_FAILED)
@@ -183,6 +200,9 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     /* Inicializar printer */
     printer = (pid_t*) malloc(sizeof(pid_t));
     *printer = new_printer(sort_pointer);
+
+    /* Iniciar alarma */
+    alarm(1);
 
     /* Bucle del proceso principal */
 #ifdef DEBUG
@@ -236,6 +256,15 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 #ifdef DEBUG
             printf("Proceso principal reanudado\n");
 #endif
+
+            if(alarm_flag==1){
+                int r;
+                for(r=0;r<num_workers;r++){
+                    kill(trabajadores[i], SIGALRM);
+                }
+                alarm_flag=0;
+                alarm(1);
+            }
 
             /* Comprobar si las tareas en el nivel se han terminado */
             bucle_principal_interno = FALSE;
