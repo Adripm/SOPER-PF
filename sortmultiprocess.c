@@ -166,7 +166,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     sigemptyset(&(handler_alarm.sa_mask));
     handler_alarm.sa_flags = 0;
 
-    if (sigaction(SIGINT, &handler_alarm, NULL) < 0)
+    if (sigaction(SIGALRM, &handler_alarm, NULL) < 0)
     {
         perror("sigaction");
         return ERROR;
