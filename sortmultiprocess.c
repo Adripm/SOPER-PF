@@ -82,7 +82,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int fd_shm;
     struct sigaction handler_usr1, handler_int, handler_alarm;
     struct mq_attr attributes;
-    int i, j;
+    int i, j, r;
     sigset_t process_mask, empty_set;
     Bool bucle_principal_interno = TRUE;
 
@@ -205,60 +205,62 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     alarm(1);
 
     /* Bucle del proceso principal */
-#ifdef DEBUG
+    #ifdef DEBUG
     printf("PID Proceso principal %d\n", getpid());
-#endif
+    #endif
 
     for (i = 0; i < sort_pointer->n_levels; i++)
     {
-#ifdef DEBUG
+        #ifdef DEBUG
         printf("-------------Nivel %d-------------\n", i);
-#endif
+        #endif
 
         bucle_principal_interno = TRUE;
 
         /* Encontrar tareas en nivel correspondiente */
         for (j = 0; j < get_number_parts(i, sort_pointer->n_levels); j++)
         {
-            /* Enviar tareas a cola de mensajes */
-            Mensaje new_msg;
-            new_msg.level = i;
-            new_msg.part = j;
+            /* Si la tarea nunca ha sido resulta (puede haberse enviado en los niveles anteriores tras recibir una señal)*/
+            if(sort_pointer->tasks[i][j].completed!=COMPLETED){
+                /* Enviar tareas a cola de mensajes */
+                Mensaje new_msg;
+                new_msg.level = i;
+                new_msg.part = j;
 
-#ifdef DEBUG
-            printf("Enviando tarea %d del nivel %d\n", j, i);
-#endif
+                #ifdef DEBUG
+                printf("Enviando tarea %d del nivel %d\n", j, i);
+                #endif
 
-            /* Si los trabajadores resuelven la tarea antes de que el proceso principal la marque como enviada ocurrirá un error */
-            /* Por ello los trabajadores esperaran al semaforo despues de leer la tarea */
+                /* Si los trabajadores resuelven la tarea antes de que el proceso principal la marque como enviada ocurrirá un error */
+                /* Por ello los trabajadores esperaran al semaforo despues de leer la tarea */
 
-            sem_wait(sem_file);
-            mq_send(queue, (char *)&new_msg, sizeof(new_msg), 0);
-            sort_pointer->tasks[i][j].completed = SENT; /* Indicar tarea como SENT */
-            sem_post(sem_file);
+                sem_wait(sem_file);
+                mq_send(queue, (char *)&new_msg, sizeof(new_msg), 0);
+                sort_pointer->tasks[i][j].completed = SENT; /* Indicar tarea como SENT */
+                sem_post(sem_file);
 
-#ifdef DEBUG
-            printf("Tarea enviada\n");
-#endif
+                #ifdef DEBUG
+                printf("Tarea enviada\n");
+                #endif
+            }
         }
 
         while (bucle_principal_interno == TRUE)
         {
 
-#ifdef DEBUG
+            #ifdef DEBUG
             printf("Proceso principal bloqueado hasta recibir SIGUSR1\n");
-#endif
-            /* Desbloquea señal SIGUSR1 */
-            /* Bloquear proceso hasta señal SIGUSR1 */
+            #endif
+            /* Desbloquea señal SIGUSR1 y ALARM */
+            /* Bloquear proceso hasta señal SIGUSR1 o ALARM */
             sigsuspend(&empty_set);
-            /* Se vuelven a bloquar las señales USR1 que se puedan recibir durante la comprobacion */
+            /* Se vuelven a bloquar las señales USR1 y ALARM que se puedan recibir durante la comprobacion */
 
-#ifdef DEBUG
+            #ifdef DEBUG
             printf("Proceso principal reanudado\n");
-#endif
+            #endif
 
             if(alarm_flag==1){
-                int r;
                 for(r=0;r<num_workers;r++){
                     kill(trabajadores[i], SIGALRM);
                 }
@@ -274,10 +276,10 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
                 {
                     bucle_principal_interno = TRUE;
 
-#ifdef DEBUG
+                    #ifdef DEBUG
                     printf("Todavía existen tareas en este nivel (Nivel %d, Tarea %d)\n", i, j);
                     printf("El estado de la tarea es: :%d\n", sort_pointer->tasks[i][j].completed);
-#endif
+                    #endif
 
                     if (sort_pointer->tasks[i][j].completed == INCOMPLETE)
                     {
@@ -295,19 +297,51 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
                         sort_pointer->tasks[i][j].completed = SENT;
                         sem_post(sem_file);
 
-#ifdef DEBUG
+                        #ifdef DEBUG
                         printf("La tarea %d del nivel %d ha sido enviada de nuevo porque estaba incompleta", j, i);
-#endif
+                        #endif
                     }
 
                     break;
                 }
             }
-        }
-#ifdef DEBUG
 
-       printf("Siguiente nivel de tareas\n");
-#endif
+            /* Comprobar si se pueden enviar más tareas de los siguientes niveles */
+            for(r=i+1;r<sort_pointer->n_levels;r++){
+                for(j = 0; j < get_number_parts(r, sort_pointer->n_levels); j++){
+                    if(check_task_ready(sort_pointer,r,j)){
+                        /* Enviar mensaje */
+                        /* Si la tarea no está completa (puede haber sido enviada ya y estar SENT o PROCESSING)*/
+                        if(sort_pointer->tasks[i][j].completed!=COMPLETED){
+                            /* Enviar tareas a cola de mensajes */
+                            Mensaje new_msg;
+                            new_msg.level = r;
+                            new_msg.part = j;
+
+                            #ifdef DEBUG
+                            printf("Enviando tarea %d del nivel %d\n", j, r);
+                            #endif
+
+                            /* Si los trabajadores resuelven la tarea antes de que el proceso principal la marque como enviada ocurrirá un error */
+                            /* Por ello los trabajadores esperaran al semaforo despues de leer la tarea */
+
+                            sem_wait(sem_file);
+                            mq_send(queue, (char *)&new_msg, sizeof(new_msg), 0);
+                            sort_pointer->tasks[r][j].completed = SENT; /* Indicar tarea como SENT */
+                            sem_post(sem_file);
+
+                            #ifdef DEBUG
+                            printf("Tarea enviada\n");
+                            #endif
+                        }
+                    }
+                }
+            }
+
+        }
+        #ifdef DEBUG
+        printf("Siguiente nivel de tareas\n");
+        #endif
     }
 
     /*printf("Algoritmo finalizado. Resultado:\n");
