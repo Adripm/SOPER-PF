@@ -32,6 +32,8 @@ void terminate_worker(){
 
 void alarm_handler_func(int sig)
 {
+    /* Una vez ha terminado la tarea, se permite trabajar al ilustrador */
+    sem_post(sem_printer);
     /* Cuando llega la señal SIGALRM se enviará de nuevo un segundo después */
     alarm(1);
 }
@@ -178,9 +180,6 @@ pid_t new_worker(Sort* sort_pointer, int* printer_pipe)
             }else{
                 sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }
-
-            /* Una vez ha terminado la tarea, se permite trabajar al ilustrador */
-            sem_post(sem_printer);
 
             #ifdef DEBUG
             printf("Trabajador %d ha terminado la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);
