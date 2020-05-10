@@ -30,7 +30,7 @@ void term_handler_printer_func(int sig){
     terminate_printer();
 }
 
-pid_t new_printer(Sort* sort_pointer, int* printer_pipe){
+pid_t new_printer(Sort* sort_pointer){
 
     pid_t pid;
 
@@ -52,10 +52,6 @@ pid_t new_printer(Sort* sort_pointer, int* printer_pipe){
             perror("sigaction");
             terminate_printer();
         }
-
-        /* Printer pipe */
-        /* Cerrar el extremo de escritura */
-        /*close(printer_pipe[0]);*/
 
         /* Abrir semáforo del printer */
         /* El semáforo ya debe existir */

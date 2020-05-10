@@ -80,8 +80,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int i, j;
     sigset_t process_mask, empty_set;
     Bool bucle_principal_interno = TRUE;
-    /*int printer_pipe[2];*/
-    int* printer_pipe = NULL; /* PLACEHOLDER */
 
     num_workers = n_processes;
     attributes.mq_maxmsg = 10;
@@ -157,12 +155,6 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
 
-    /* Inicializar pipe de printer */
-    /*if(pipe(printer_pipe)==-1){
-        perror("pipe");
-        terminate_process();
-    }*/
-
     /*Crear semáforo*/
     sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
     if (sem_file == SEM_FAILED)
@@ -184,13 +176,13 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     }
     for (i = 0; i < n_processes; i++)
     {
-        trabajadores[i] = new_worker(sort_pointer, printer_pipe);
+        trabajadores[i] = new_worker(sort_pointer);
     }
     /* ################################### */
 
     /* Inicializar printer */
     printer = (pid_t*) malloc(sizeof(pid_t));
-    *printer = new_printer(sort_pointer, printer_pipe);
+    *printer = new_printer(sort_pointer);
 
     /* Bucle del proceso principal */
 #ifdef DEBUG

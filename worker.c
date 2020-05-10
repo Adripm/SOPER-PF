@@ -42,7 +42,7 @@ void term_handler_func(int sig){
     terminate_worker();
 }
 
-pid_t new_worker(Sort* sort_pointer, int* printer_pipe)
+pid_t new_worker(Sort* sort_pointer)
 {
 
     pid_t pid;
@@ -82,10 +82,6 @@ pid_t new_worker(Sort* sort_pointer, int* printer_pipe)
 
         /* Debug */
         self_pid = getpid();
-
-        /* Printer pipe */
-        /* Cerrar extremo de lectura */
-        /*close(printer_pipe[1]);*/
 
         /* Inicializar el manejador para la señal SIGALARM*/
         /* Mandar una sñal SIGALARM cada segundo*/
