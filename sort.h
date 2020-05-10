@@ -23,9 +23,6 @@
 /*#define DEBUG 0*/
 #define DELAY 0
 
-int *enviar_estado[2];
-int *recibir_permiso[2];
-
 /* Type definitions. */
 
 /* Completed flag for the tasks. */

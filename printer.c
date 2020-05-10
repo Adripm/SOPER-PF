@@ -64,8 +64,15 @@ pid_t new_printer(Sort* sort_pointer, int* printer_pipe){
             terminate_printer();
         }
 
+        #ifdef DEBUG
+        printf("Ilustrador %d entrando en bucle\n",getpid());
+        #endif
+
         while(bucle_printer){
 
+            #ifdef DEBUG
+            printf("Ilustrador espera\n");
+            #endif
             /* El ilustrador espera a que los procesos trabajadores */
             /* abran el semaforo tras actualizar una tarea para dibujar */
             sem_wait(sem_printer);
