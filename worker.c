@@ -34,6 +34,7 @@ void alarm_handler_func(int sig)
 {
     /* Cuando llega la señal SIGALRM se enviará de nuevo un segundo después */
     alarm(1);
+    print("%d received alarm\n",getpid());
 }
 
 void term_handler_func(int sig){
