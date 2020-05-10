@@ -286,11 +286,11 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
 #endif
     }
 
-    printf("Algoritmo finalizado. Resultado:\n");
+    /*printf("Algoritmo finalizado. Resultado:\n");
     for (i = 0; i<sort_pointer->n_elements; i++)
     {
         printf("%d ", sort_pointer->data[i]);
-    }
+    }*/
 
     /* Cleanup */ /* Funcion que maneja la salida del proceso */
     terminate_process();
