@@ -18,12 +18,15 @@
 #include "utils.h"
 
 sem_t* sem;
+sem_t* sem_printer;
 mqd_t queue;
 Sort* shm_sort;
 
 void terminate_worker(){
     mq_close(queue);
     sem_close(sem);
+    sem_close(sem_printer);
+    munmap(shm_sort,sizeof(*shm_sort));
     exit(EXIT_SUCCESS);
 }
 
@@ -37,7 +40,7 @@ void term_handler_func(int sig){
     terminate_worker();
 }
 
-pid_t new_worker(Sort* sort_pointer)
+pid_t new_worker(Sort* sort_pointer, int* printer_pipe)
 {
 
     pid_t pid;
@@ -50,14 +53,6 @@ pid_t new_worker(Sort* sort_pointer)
         sigset_t waiting_message_set, default_set;
         pid_t self_pid;
 
-        /* La estructura Sort ya está mapeada en este proceso */
-        shm_sort = sort_pointer;
-        /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
-        sem = sem_open(SEM_NAME,0);
-        if(sem==SEM_FAILED){
-            terminate_worker();
-        }
-
         /* Signal masks */
         sigemptyset(&default_set);
         sigemptyset(&waiting_message_set);
@@ -68,8 +63,27 @@ pid_t new_worker(Sort* sort_pointer)
 
         sigprocmask(SIG_BLOCK, &default_set, NULL);
 
-        /* Testing */
+        /* La estructura Sort ya está mapeada en este proceso */
+        shm_sort = sort_pointer;
+
+        /* Semaforo - El semáforo con ese nombre YA DEBE EXISTIR */
+        sem = sem_open(SEM_NAME,0);
+        if(sem==SEM_FAILED){
+            terminate_worker();
+        }
+
+        /* Semáforo - PRINTER */
+        sem_printer = sem_open(SEM_PRINTER,0);
+        if(sem_printer==SEM_FAILED){
+            terminate_worker();
+        }
+
+        /* Debug */
         self_pid = getpid();
+
+        /* Printer pipe */
+        /* Cerrar extremo de lectura */
+        close(printer_pipe[1]);
 
         /* Inicializar el manejador para la señal SIGALARM*/
         /* Mandar una sñal SIGALARM cada segundo*/
@@ -132,7 +146,7 @@ pid_t new_worker(Sort* sort_pointer)
             #ifdef DEBUG
             printf("Trabajador %d ha leido una tarea\n",self_pid);
             #endif
-            
+
             /* Resolver tarea - CONCURRENCIA */
             /* Nunca existirá concurrencia entre las tareas si los trabajadores acceden a diferentes tareas */
             /* Pero si podría existir concurrencia entre el proceso principal y el trabajador */
@@ -164,6 +178,9 @@ pid_t new_worker(Sort* sort_pointer)
             }else{
                 sort_pointer->tasks[new_task.level][new_task.part].completed = INCOMPLETE;
             }
+
+            /* Una vez ha terminado la tarea, se permite trabajar al ilustrador */
+            sem_post(sem_printer);
 
             #ifdef DEBUG
             printf("Trabajador %d ha terminado la tarea %d del nivel %d\n",self_pid,new_task.part,new_task.level);

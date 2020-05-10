@@ -18,7 +18,8 @@
 #include "utils.h"
 
 int num_workers;
-pid_t *trabajadores; /* Lista de PIDs de los trabajadores */
+pid_t* trabajadores; /* Lista de PIDs de los trabajadores */
+pid_t* printer;
 mqd_t queue;
 Sort *sort_pointer;
 sem_t *sem_file;
@@ -34,6 +35,10 @@ void terminate_process()
     }
     free(trabajadores);
 
+    /* Cerrar el printer */
+    kill(*printer,SIGTERM);
+    waitpid(*printer, NULL, 0);
+
     /* Cerrar la cola de mensajes */
     mq_close(queue);
     mq_unlink(MQ_NAME);
@@ -45,6 +50,9 @@ void terminate_process()
     /* Cerrar el semaforo */
     sem_close(sem_file);
     sem_unlink(SEM_NAME);
+
+    /* Cerrar semáforo printer */
+    sem_unlink(SEM_PRINTER);
 
     exit(EXIT_SUCCESS);
 }
@@ -71,6 +79,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     int i, j;
     sigset_t process_mask, empty_set;
     Bool bucle_principal_interno = TRUE;
+    int printer_pipe[2];
 
     num_workers = n_processes;
     attributes.mq_maxmsg = 10;
@@ -146,10 +155,21 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
         return ERROR;
     }
 
+    /* Inicializar pipe de printer */
+    if(pipe(printer_pipe)==-1){
+        perror("pipe");
+        terminate_process();
+    }
+
     /*Crear semáforo*/
     sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
     if (sem_file == SEM_FAILED)
     {
+        terminate_process();
+    }
+
+    /* Crear semáforo printer */
+    if(sem_open(SEM_PRINTER, O_CREAT|O_EXCL, S_IRUSR|S_IWUSR, 0)==SEM_FAILED){
         terminate_process();
     }
 
@@ -158,15 +178,18 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     trabajadores = (pid_t *)malloc(sizeof(pid_t) * n_processes);
     if (!trabajadores)
     {
-        return ERROR;
+        terminate_process();
     }
     for (i = 0; i < n_processes; i++)
     {
-        trabajadores[i] = new_worker(sort_pointer);
+        trabajadores[i] = new_worker(sort_pointer, printer_pipe);
     }
-/* ################################### */
+    /* ################################### */
 
-/* Bucle del proceso principal */
+    /* Inicializar printer */
+    *printer = new_printer(sort_pointer, printer_pipe);
+
+    /* Bucle del proceso principal */
 #ifdef DEBUG
     printf("PID Proceso principal %d\n", getpid());
 #endif
@@ -235,6 +258,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
                     if (sort_pointer->tasks[i][j].completed == INCOMPLETE)
                     {
                         /* Si la tarea está incompleta, se volverá a mandar */
+                        /* No debería de ocurrir en condiciones normales */
                         /* El estado incompleto solo se indica si solve_task ha retornado un error */
                         /* Por lo tanto, aunque se vuelva a mandar la misma tarea, nunca habrá más de un proceso resolviéndola */
 
@@ -242,9 +266,10 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
                         new_msg.level = i;
                         new_msg.part = j;
 
+                        sem_wait(sem_file);
                         mq_send(queue, (char *)&new_msg, sizeof(new_msg), 0);
-
                         sort_pointer->tasks[i][j].completed = SENT;
+                        sem_post(sem_file);
 
 #ifdef DEBUG
                         printf("La tarea %d del nivel %d ha sido enviada de nuevo porque estaba incompleta", j, i);

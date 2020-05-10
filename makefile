@@ -17,7 +17,7 @@ ARG_DELAY=100
 
 all: sort
 
-sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o $(OBJ)/worker.o $(OBJ)/sortmultiprocess.o
+sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o $(OBJ)/worker.o $(OBJ)/sortmultiprocess.o $(OBJ)/printer.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBRARIES)
 
 ##############################################
@@ -35,6 +35,9 @@ $(OBJ)/worker.o: worker.c sort.h global.h utils.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/sortmultiprocess.o: sortmultiprocess.c sort.h global.h utils.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/printer.o: printer.c sort.h global.h utils.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ##############################################
