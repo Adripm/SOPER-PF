@@ -83,7 +83,7 @@ pid_t new_worker(Sort* sort_pointer, int* printer_pipe)
 
         /* Printer pipe */
         /* Cerrar extremo de lectura */
-        close(printer_pipe[1]);
+        /*close(printer_pipe[1]);*/
 
         /* Inicializar el manejador para la señal SIGALARM*/
         /* Mandar una sñal SIGALARM cada segundo*/

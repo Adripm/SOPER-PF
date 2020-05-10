@@ -55,7 +55,7 @@ pid_t new_printer(Sort* sort_pointer, int* printer_pipe){
 
         /* Printer pipe */
         /* Cerrar el extremo de escritura */
-        close(printer_pipe[0]);
+        /*close(printer_pipe[0]);*/
 
         /* Abrir semáforo del printer */
         /* El semáforo ya debe existir */
