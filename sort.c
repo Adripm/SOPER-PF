@@ -32,7 +32,10 @@ Status bubble_sort(int *vector, int n_elements, int delay)
         for (j = 0; j < n_elements - i - 1; j++)
         {
             /* Delay. */
+            #ifdef DELAY
             fast_sleep(delay);
+            #endif
+
             if (vector[j] > vector[j + 1])
             {
                 temp = vector[j];
@@ -65,7 +68,10 @@ Status merge(int *vector, int middle, int n_elements, int delay)
     for (k = 0; k < n_elements; k++)
     {
         /* Delay. */
+        #ifdef DELAY
         fast_sleep(delay);
+        #endif
+        
         if ((i < middle) && ((j >= n_elements) || (aux[i] < aux[j])))
         {
             vector[k] = aux[i];
@@ -276,190 +282,6 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 
     plot_vector(sort.data, sort.n_elements);
     printf("\nAlgorithm completed\n");
-
-    return OK;
-}
-
-void usr1_handler_func(int sig)
-{
-    /*printf("Señal %d recibida\n",sig);*/
-}
-
-Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay)
-{
-    Sort sort;
-    Sort *sort_pointer = &sort;
-    int fd_shm;
-    struct sigaction handler_usr1;
-    mqd_t queue;
-    struct mq_attr attributes;
-    /*int fd_trabajadores[n_processes][2];
-    int fd_ilustrador[n_processes][2];*/ /* ISO C90 forbids variable length array, allocate memory instead */
-    sem_t *sem_file;
-    int i, j; /*status_pipe;*/
-    sigset_t process_mask, empty_set;
-    Bool bucle_principal_interno = TRUE;
-    pid_t* trabajadores; /* Lista de PIDs de los trabajadores */
-
-    attributes.mq_maxmsg = 10;
-    attributes.mq_msgsize = sizeof(Mensaje);
-
-    sigemptyset(&process_mask);
-    sigaddset(&process_mask,SIGUSR1);
-    sigemptyset(&empty_set);
-
-    sigprocmask(SIG_BLOCK,&process_mask,NULL);
-
-    /* Inicializar cola de mensajes */
-    queue = mq_open(MQ_NAME, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, &attributes);
-    if (queue == (mqd_t)-1)
-    {
-        perror("");
-        fprintf(stderr, "Error opening the queue.\n");
-        return ERROR;
-    }
-
-    /* Inicializar la estructura sort en memoria compartida */
-    if (init_sort(file_name, &sort, n_levels, n_processes, delay) == ERROR)
-    {
-        fprintf(stderr, "sort_multi_process - init_sort\n");
-        return ERROR;
-    }
-
-    /* Crear memoria compartida */
-    fd_shm = shm_open(SHM_NAME, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-    if (fd_shm == -1)
-    {
-        fprintf(stderr, "Error creating the shared memory segment\n");
-        return ERROR;
-    }
-
-    /* Redimensionar memoria compartida */
-    if (ftruncate(fd_shm, MAX_DATA) == -1)
-    { /* @PLACEHOLDER - Comprobar tamaño necesitado */
-        fprintf(stderr, "Error resizing the shared memory segment\n");
-        shm_unlink(SHM_NAME);
-        return ERROR;
-    }
-
-    /* Mapear segmento de memoria al proceso principal y cerrar el descriptor de fichero de la memoria compartida */
-    sort_pointer = mmap(NULL, sizeof(*sort_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, fd_shm, 0);
-    close(fd_shm);
-    if (sort_pointer == MAP_FAILED)
-    {
-        fprintf(stderr, "Error mapping the shared memory segment\n");
-        shm_unlink(SHM_NAME);
-        return ERROR;
-    }
-
-    /* Inicializar manejador del proceso principal para la señal SIGUSR1 */
-    handler_usr1.sa_handler = usr1_handler_func; /* funcion manejador */
-    sigemptyset(&(handler_usr1.sa_mask));
-    handler_usr1.sa_flags = 0;
-
-    if (sigaction(SIGUSR1, &handler_usr1, NULL) < 0)
-    {
-        perror("sigaction");
-        return ERROR;
-    }
-
-    /*Crear semáforo*/
-    sem_file = sem_open(SEM_NAME, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 1);
-
-    /*Crear pipes*/
-
-    /*for (i = 0; i < n_processes; i++)
-    {
-        status_pipe = pipe(fd_trabajadores[i]);
-        if (status_pipe == -1)
-        {
-            perror("Error creando la tuberia\n");
-            exit(EXIT_FAILURE);
-        }
-    }*/
-
-    /*for (i = 0; i < n_processes; i++)
-    {
-        status_pipe = pipe(fd_ilustrador[i]);
-        if (status_pipe == -1)
-        {
-            perror("Error creando la tuberia\n");
-            exit(EXIT_FAILURE);
-        }
-    }*/
-
-    /* Iniciar trabajadores */
-    /* ################################### */
-    trabajadores = (pid_t*) malloc(sizeof(pid_t)*n_processes);
-    if(!trabajadores){
-        return ERROR;
-    }
-    for(i=0;i<n_processes;i++){
-        trabajadores[i]=new_worker(sort_pointer,sem_file);
-    }
-    /* ################################### */
-
-    /* Bucle del proceso principal */
-    printf("PID Proceso principal %d\n",getpid());
-    for(i=0;i<sort.n_levels;i++)
-    {
-        bucle_principal_interno = TRUE;
-
-        /* Encontrar tareas en nivel correspondiente */
-        for(j=0;j<get_number_parts(i, sort.n_levels);j++){
-            /* Enviar tareas a cola de mensajes */
-            Mensaje new_msg;
-            new_msg.level=i;
-            new_msg.part=j;
-
-            mq_send(queue,(char*)&new_msg,sizeof(new_msg),0);
-
-            /* Indicar tarea como SENT */
-            sort_pointer->tasks[i][j].completed = SENT;
-
-        }
-
-        printf("Nivel %d\n",i);
-
-        while (bucle_principal_interno==TRUE)
-        {
-
-            /* Desbloquea señal SIGUSR1 */
-            /* Bloquear proceso hasta señal SIGUSR1 */
-            sigsuspend(&empty_set);
-
-            /* Comprobar si las tareas en el nivel se han terminado */
-            bucle_principal_interno = FALSE;
-            for(j=0;j<get_number_parts(i,sort.n_levels);j++){
-                if(sort.tasks[i][j].completed!=COMPLETED){
-                    bucle_principal_interno = TRUE;
-                    break;
-                }
-            }
-
-        }
-    }
-
-    /* Cleanup */ /* @PLACEHOLDER - Pasar a una funcion que maneje la salida del proceso */
-
-    /* Cerrar los trabajadores */
-    for(i=0;i<n_processes;i++){
-        kill(trabajadores[i],SIGTERM);
-        waitpid(trabajadores[i],NULL,0);
-    }
-    free(trabajadores);
-
-    /* Cerrar la cola de mensajes */
-    mq_close(queue);
-    mq_unlink(MQ_NAME);
-
-    /* Cerrar memoria compartida */
-    munmap(sort_pointer, sizeof(*sort_pointer));
-    shm_unlink(SHM_NAME);
-
-    /* Cerrar el semaforo */
-    sem_close(sem_file);
-    sem_unlink(SEM_NAME);
 
     return OK;
 }

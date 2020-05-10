@@ -17,7 +17,7 @@ ARG_DELAY=100
 
 all: sort
 
-sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o $(OBJ)/worker.o
+sort: $(OBJ)/main.o $(OBJ)/sort.o $(OBJ)/utils.o $(OBJ)/worker.o $(OBJ)/sortmultiprocess.o $(OBJ)/printer.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBRARIES)
 
 ##############################################
@@ -32,6 +32,12 @@ $(OBJ)/utils.o: utils.c utils.h global.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ)/worker.o: worker.c sort.h global.h utils.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/sortmultiprocess.o: sortmultiprocess.c sort.h global.h utils.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ)/printer.o: printer.c sort.h global.h utils.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ##############################################
@@ -56,7 +62,7 @@ run: sort
 runv: sort
 	@echo "Launching program with valgrind..."
 	@sleep 1
-	@valgrind ./sort $(ARG_FILE) $(ARG_N_LEVELS) $(ARG_N_PROCESSES) $(ARG_DELAY)
+	@valgrind --leak-check=full ./sort $(ARG_FILE) $(ARG_N_LEVELS) $(ARG_N_PROCESSES) $(ARG_DELAY)
 
 runve: sort
 	@echo "Launching program with valgrind and checking errors..."

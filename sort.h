@@ -15,9 +15,13 @@
 #define PLOT_PERIOD 1
 #define NO_MID -1
 
-#define SHM_NAME "/shm_sort6"
-#define MQ_NAME "/mq_tasks6"
-#define SEM_NAME "/sem6"
+#define SHM_NAME "/shm_sort"
+#define MQ_NAME "/mq_tasks"
+#define SEM_NAME "/sem_file"
+#define SEM_PRINTER "/sem_printer"
+
+/*#define DEBUG 0*/
+#define DELAY 0
 
 /* Type definitions. */
 
@@ -158,6 +162,9 @@ Status sort_single_process(char *file_name, int n_levels, int n_processes, int d
 Status sort_multi_process(char *file_name, int n_levels, int n_processes, int delay);
 
 /* Añadir doc */
-pid_t new_worker(Sort* shm_map_segment, sem_t* semaphore);
+pid_t new_worker(Sort* sort_pointer);
+
+/* Añadir doc */
+pid_t new_printer(Sort* sort_pointer);
 
 #endif
