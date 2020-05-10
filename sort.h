@@ -17,7 +17,7 @@
 
 #define SHM_NAME "/shm_sort"
 #define MQ_NAME "/mq_tasks"
-#define SEM_NAME "/sem"
+#define SEM_NAME "/sem_file"
 #define SEM_PRINTER "/sem_printer"
 
 /*#define DEBUG 0*/
