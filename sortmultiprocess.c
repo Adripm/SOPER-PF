@@ -22,7 +22,7 @@ pid_t* trabajadores; /* Lista de PIDs de los trabajadores */
 pid_t* printer;
 mqd_t queue;
 Sort *sort_pointer;
-sem_t *sem_file;
+sem_t *sem_file = NULL;
 
 void terminate_process()
 {
@@ -38,6 +38,7 @@ void terminate_process()
     /* Cerrar el printer */
     kill(*printer,SIGTERM);
     waitpid(*printer, NULL, 0);
+    free(printer);
 
     /* Cerrar la cola de mensajes */
     mq_close(queue);
@@ -188,6 +189,7 @@ Status sort_multi_process(char *file_name, int n_levels, int n_processes, int de
     /* ################################### */
 
     /* Inicializar printer */
+    printer = (pid_t*) malloc(sizeof(pid_t));
     *printer = new_printer(sort_pointer, printer_pipe);
 
     /* Bucle del proceso principal */
